@@ -55,7 +55,7 @@ def crossover_one_point(vector, crossover_rate):
 
 def crossover_two_points(vector, crossover_rate):
     new_individuals = []
-    while len(new_individuals) < 2:
+    while len(new_individuals) < 30:
         probability = randint(0, 100)
         if probability <= crossover_rate:
             
@@ -126,22 +126,25 @@ def optimization(generations: int,
             crossed = crossover_one_point(selected, crossover_rate=crossover_rate)
 
         mutated = mutation(crossed, mutation_rate)
-        best_individual = get_best_individual(mutated)
+        best_individual = get_best_individual(mutated, _)
         population = mutated
         best_individuals[best_individual[1]] = best_individual[0]
+
+        if solver_function(best_individual[0]) == 0:
+            break
+
         
     for fitness, individual in best_individuals.items():
         print(f"Fitness: {fitness}, Individual: {individual}")    
 
 
-
 def main():
-    optimization(20000, 30, 30, (-100, 100), 75, 0.9,  0, 0)
+    optimization(15000, 30, 30, (-100, 100), 75, 0.9,  0, 0)
     
 # 1 para esfera
 # 2 para rastrigin
 # 3 para rosenbrock
-solver = 3
+solver = 1
 def solver_function(vector):
     resultado = 0
     if solver == 1:
