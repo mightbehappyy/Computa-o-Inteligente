@@ -15,9 +15,9 @@ class particle:
             self.pbest = self.position
             velocity_value = randint(floor(self.range[0] * 0.3), floor(self.range[1] * 0.3))
             
-            if self.position[c] + velocity_value >  self.range[1] or self.position[c] + velocity_value <  self.range[0]:
-                velocity_value = -velocity_value
-    
+            #if self.position[c] + velocity_value >  self.range[1] or self.position[c] + velocity_value <  self.range[0]:
+            #    velocity_value = -velocity_value
+            
             self.velocity.append(velocity_value)
 
     def get_position(self):
