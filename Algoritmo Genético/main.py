@@ -1,6 +1,10 @@
 from random import randint, uniform, choices
 import math
-
+from matplotlib import pyplot as plt
+import seaborn as sns
+import pandas as pd
+import numpy as np
+import time
 solver: int
 
 def create_population(individuals: int = 30, genes: int = 30, genes_limit = (-100, 100)):
@@ -113,7 +117,8 @@ def optimization(generations: int,
     best_individuals = {}
 
     population = create_population(individuals=individuals, genes=genes, genes_limit=genes_limit)
-
+    generation = []
+    all_individuals = []
     for _ in range(generations):
         if selection_type == 1:
             selected = proportional_to_fitness(population)
@@ -126,25 +131,90 @@ def optimization(generations: int,
             crossed = crossover_one_point(selected, crossover_rate=crossover_rate)
 
         mutated = mutation(crossed, mutation_rate)
-        best_individual = get_best_individual(mutated, _)
+        best_individual = get_best_individual(mutated)
         population = mutated
+
         best_individuals[best_individual[1]] = best_individual[0]
-
-        if solver_function(best_individual[0]) == 0:
-            break
-
         
+        generation.append(_)
+        all_individuals.append(solver_function(best_individual[0]))
+        if solver_function(best_individual[0]) == 0.0:
+            break
+    
+    fitness_over_time = []
     for fitness, individual in best_individuals.items():
-        print(f"Fitness: {fitness}, Individual: {individual}")    
+        fitness_over_time.append(fitness)    
+    # plot_convergence_graph(all_individuals, generation, len(generation))
+    return generation, all_individuals[-1]
 
+def plot_convergence_graph(best_fitness_over_time, generation, totalGens):
+    plt.figure(figsize=(8, 5))
+    plt.plot(generation, best_fitness_over_time, label=f'Melhor fitness, gens: {totalGens}', color='blue')
+    plt.title('Gráfico de convergência')
+    plt.xlabel('Iteração')
+    plt.ylabel('Valor do fitness')
+    plt.grid(True)
+    plt.legend()
+    plt.show()
 
 def main():
-    optimization(15000, 30, 30, (-100, 100), 75, 0.9,  0, 0)
+    generation_converged = []
+    fitness_per_generation = []
+    time_per_execution = []
+    for c in range(30):
+        start_time = time.time()
+        generation, fitness = optimization(15000, 30, 30, (-100, 100), 75, 0.9,  0, 0)
+        end_time = time.time()
+        print(fitness)
+        time_per_execution.append(end_time - start_time)
+        generation_converged.append(len(generation))
+        fitness_per_generation.append(fitness)
+
+    data = pd.DataFrame({
+    'Fitness': fitness_per_generation,
+    'Algoritmo': ['GA'] * len(fitness_per_generation)
+    })
+
+    ga_fit_mean = np.mean(fitness_per_generation)
+    ga_fit_max= np.max(fitness_per_generation)
+    ga_fit_min = np.min(fitness_per_generation)
+
+    ga_gen_mean = np.mean(generation_converged)
+    ga_gen_max = np.max(generation_converged)
+    ga_gen_min = np.min(generation_converged)
+
+    ga_time_mean = np.mean(time_per_execution)
+    ga_time_max = np.max(time_per_execution)
+    ga_time_min = np.min(time_per_execution)
+
+
+
+    plt.figure(figsize=(8,6))
+    sns.boxplot(x='Algoritmo', y='Fitness', data=data)
+    plt.title("Comparação de Fitness - GA")
+    plt.ylabel("Melhor Fitness (Menor é Melhor)")
+    print("Média do fitness: ", ga_fit_mean)
+    print("Fitness máximo: ", ga_fit_max)
+    print("Fitness mínimo: ", ga_fit_min)
+
+    print("Média das gerações: ", ga_gen_mean)
+    print("Geração máxima: ", ga_gen_max)
+    print("Geração mínima: ", ga_gen_min)
+
+    print("Média do tempo: ", ga_time_mean)
+    print("Tempo máximo: ", ga_time_max)
+    print("Tempo mínimo: ", ga_time_min)
+
+
+    plt.xlabel("Algoritmo")
+    plt.show()
+    
+
     
 # 1 para esfera
 # 2 para rastrigin
 # 3 para rosenbrock
-solver = 1
+solver = 3
 def solver_function(vector):
     resultado = 0
     if solver == 1:
@@ -161,8 +231,6 @@ def solver_function(vector):
             resultado += 100*(vector[i+1] - vector[i]**2)**2 + (vector[i] - 1)**2
 
     return resultado
-    
 
 if __name__ == "__main__":
    main()
-   

@@ -2,6 +2,11 @@ from particle import particle
 import random
 from math import floor, sqrt
 from matplotlib import pyplot as plt
+import math
+import time
+import seaborn as sns
+import pandas as pd
+import numpy as np
 def create_initial_population(dimensions: int, limit: tuple, population_size: int):
     population = {}
 
@@ -40,7 +45,6 @@ def execute_pso_algorithm(dimensions: int, limit: tuple, population_size: int, i
             new_position = sum_two_lists(individual.get_position(), individual.get_velocity())
             individual.set_position(new_position)
 
-            
             if evaluate(individual.get_position()) < evaluate(individual.get_pbest()):
                 individual.set_pbest(individual.get_position())
 
@@ -51,19 +55,10 @@ def execute_pso_algorithm(dimensions: int, limit: tuple, population_size: int, i
         print(evaluate(best_global_position))
         count += 1
         if evaluate(best_global_position) == 0:
-            print(best_global_position_historic)
             break
 
-    plot_convergence_graph(best_global_position_historic, generation, count)
-
-        
-
-
-
-def get_geographic_local_best_position(population, position):
-    test_population = population
-    three_closest = []
-
+    # plot_convergence_graph(best_global_position_historic, generation, count)
+    return generation, best_global_position_historic[-1]
 
 def get_network_best_position(population, position):
     current_individual = population[position].get_position()
@@ -131,12 +126,76 @@ def get_best_individual(population, generation):
    
     return min(individuals.items(), key=lambda item: item[1])
 
+solver = 2
 def evaluate(vector):
-  resultado = 0
-  for i in vector:
-    resultado += i**2
-  
-  return resultado
+    resultado = 0
+    if solver == 1:
+        for i in vector:
+            resultado += i**2
+
+    elif solver == 2:
+        for i in vector:
+            numero = 2*3.1415*i
+            p = (numero/180)*math.pi
+            resultado+= (i**2) - (10 * math.cos(p)) + 10
+    elif solver == 3:
+        for i in range(0,(len(vector)-1)):
+            resultado += 100*(vector[i+1] - vector[i]**2)**2 + (vector[i] - 1)**2
+
+    return resultado
 
 if __name__ == "__main__":
-    execute_pso_algorithm(30, (-100, 100), 60, 5500, 1)
+    time_per_execution = []
+    fitness_per_execution = []
+    generations_to_converge = []
+
+    for c in range(30):
+        start_time = time.time()
+        generation, fitness = execute_pso_algorithm(30, (-100, 100), 60, 15000, 1)
+        end_time = time.time()
+        time_per_execution.append(end_time - start_time)
+        fitness_per_execution.append(fitness)
+        generations_to_converge.append(generation[-1])
+        print(time_per_execution)
+        print(fitness_per_execution)
+        print(generations_to_converge)
+        
+
+
+    data = pd.DataFrame({
+    'Fitness': fitness_per_execution,
+    'Algoritmo': ['PSO'] * len(fitness_per_execution)
+    })
+
+    pso_fit_mean = np.mean(fitness_per_execution)
+    pso_fit_max= np.max(fitness_per_execution)
+    pso_fit_min = np.min(fitness_per_execution)
+
+    pso_gen_mean = np.mean(generations_to_converge)
+    pso_gen_max = np.max(generations_to_converge)
+    pso_gen_min = np.min(generations_to_converge)
+
+    pso_time_mean = np.mean(time_per_execution)
+    pso_time_max = np.max(time_per_execution)
+    pso_time_min = np.min(time_per_execution)    
+
+
+    plt.figure(figsize=(8,6))
+    sns.boxplot(x='Algoritmo', y='Fitness', data=data)
+    plt.title("Comparação de Fitness - GA")
+    plt.ylabel("Melhor Fitness (Menor é Melhor)")
+    print("Média do fitness: ", pso_fit_mean)
+    print("Fitness máximo: ", pso_fit_max)
+    print("Fitness mínimo: ", pso_fit_min)
+
+    print("Média das gerações: ", pso_gen_mean)
+    print("Geração máxima: ", pso_gen_max)
+    print("Geração mínima: ", pso_gen_min)
+
+    print("Média do tempo: ", pso_time_mean)
+    print("Tempo máximo: ", pso_time_max)
+    print("Tempo mínimo: ", pso_time_min)
+
+
+    plt.xlabel("Algoritmo")
+    plt.show()
